@@ -1,83 +1,84 @@
-import RestaurantCard from "./RestaurantCard";
+import React, { useState, useEffect } from "react";
 import resList from "../utils/mockData";
-import { useState } from "react";
+import RestaurantCard from "./RestaurantCard";
+import Shimmer from "./Shimmer";
 
 const Body = () => {
-  const [listOfRest, setlistOfRest] = useState(resList);
+  const [listOfRest, setListOfRest] = useState([]);
+  const [filteredRestaurant, setfilteredRestaurant] = useState([]);
 
-  let listOfRestjs = [
-    {
-      data: {
-        id: "334475",
-        name: "KFC",
+  const [searchText, setSearchText] = useState(" ");
 
-        totalRatingsString: "500+ ratings",
-        cloudinaryImageId: "bdcd233971b7c81bf77e1fa4471280eb",
-        cuisines: ["Burgers", "Biryani", "American", "Snacks", "Fast Food"],
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-        costForTwo: 40000,
-        costForTwoString: "₹400 FOR TWO",
-        deliveryTime: 36,
+  const fetchData = async () => {
+    const data = await fetch(
+      "https://www.swiggy.com/dapi/restaurants/list/v5?lat=12.9715987&lng=77.5945627&is-seo-homepage-enabled=true&page_type=DESKTOP_WEB_LISTING"
+    );
 
-        avgRating: "3.8",
-        totalRatings: 500,
-      },
-    },
-    {
-      data: {
-        id: "334476",
-        name: "Dominos",
+    const json = await data.json();
+    console.log(json);
+    console.log(
+      json.data?.cards[5]?.card?.card?.gridElements?.infoWithStyle?.restaurants
+    );
+    setListOfRest(
+      json.data?.cards[5]?.card?.card?.gridElements?.infoWithStyle?.restaurants
+    );
+    setfilteredRestaurant(
+      json.data?.cards[5]?.card?.card?.gridElements?.infoWithStyle?.restaurants
+    );
+  };
 
-        totalRatingsString: "500+ ratings",
-        cloudinaryImageId: "bdcd233971b7c81bf77e1fa4471280eb",
-        cuisines: ["Burgers", "Biryani", "American", "Snacks", "Fast Food"],
-
-        costForTwo: 40000,
-        costForTwoString: "₹400 FOR TWO",
-        deliveryTime: 36,
-
-        avgRating: "4.8",
-        totalRatings: 500,
-      },
-    },
-    {
-      data: {
-        id: "334479",
-        name: "McD",
-
-        totalRatingsString: "500+ ratings",
-        cloudinaryImageId: "bdcd233971b7c81bf77e1fa4471280eb",
-        cuisines: ["Burgers", "Biryani", "American", "Snacks", "Fast Food"],
-
-        costForTwo: 40000,
-        costForTwoString: "₹400 FOR TWO",
-        deliveryTime: 36,
-
-        avgRating: "4.1",
-        totalRatings: 500,
-      },
-    },
-  ];
-  return (
+  return listOfRest.length === 0 ? (
+    <Shimmer />
+  ) : (
     <div className="body">
       <div className="filter">
+        <div className="search">
+          <input
+            type="text"
+            className="search-box"
+            value={searchText}
+            onChange={(e) => {
+              setSearchText(e.target.value);
+            }}
+          />
+          <button
+            className="search-btn"
+            onClick={() => {
+              console.log(listOfRest.length);
+              console.log(searchText);
+
+              const filterRestaurant = listOfRest.filter((res) =>
+                res.info?.name.toLowerCase()?.includes(searchText.toLowerCase())
+              );
+
+              setfilteredRestaurant(filterRestaurant);
+              console.log(filteredRestaurant.length);
+            }}
+          >
+            Search
+          </button>
+        </div>
         <button
           className="filter-btn"
           onClick={() => {
-            const filteredListOfRest = listOfRest.filter(
-              (res) => res.data.avgRating > 4
+            setfilteredRestaurant(
+              listOfRest.filter((res) => res.info.avgRating > 4.5)
             );
-            console.log(listOfRest);
-            setlistOfRest(filteredListOfRest);
           }}
         >
-          Top Rated Restaurants
+          Top Rated Restaurant
         </button>
       </div>
       <div className="res-container">
-        {listOfRest.map((restaurant) => (
-          <RestaurantCard key={restaurant.data.id} resData={restaurant} />
-        ))}
+        {filteredRestaurant.map((restaurant) => {
+          return (
+            <RestaurantCard key={restaurant.info.id} resData={restaurant} />
+          );
+        })}
       </div>
     </div>
   );
